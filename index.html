@@ -268,11 +268,19 @@
         const auth = getAuth(app);
 
         let dailyStats = {};
-        let subjects = ['Chemistry', 'Physics', 'Maths', 'Tests'];
-        let selectedDate = new Date().toISOString().split('T')[0];
+        let subjects = ['Chemistry', 'Physics', 'Maths', 'Tests', 'Class'];
+        let selectedDate = getCurrentDate();
         let selectedWeekStart = getWeekStart(new Date()).toISOString().split('T')[0];
         let efficiencyChart;
         let currentUser = null;
+
+        function getCurrentDate() {
+            const now = new Date();
+            if (now.getHours() < 4) {
+                now.setDate(now.getDate() - 1);
+            }
+            return now.toISOString().split('T')[0];
+        }
 
         function signUp() {
             const email = document.getElementById('emailInput').value;
@@ -379,7 +387,7 @@
             testDiv.className = 'test-item';
             testDiv.innerHTML = `
                 <select>
-                    ${subjects.slice(0, 3).map(subject => `<option value="${subject}">${subject}</option>`).join('')}
+                    ${subjects.slice(0, 4).map(subject => `<option value="${subject}">${subject}</option>`).join('')}
                 </select>
                 <input type="text" placeholder="Topic">
                 <input type="number" placeholder="Marks Scored">
@@ -570,7 +578,7 @@
             const weekTests = getWeekTests();
 
             let summaryHTML = '<table class="summary-table"><tr><th>Subject</th><th>Today\'s Tests</th><th>Week\'s Tests</th></tr>';
-            subjects.slice(0, 3).forEach(subject => {
+            subjects.slice(0, 4).forEach(subject => {
                 const dayTestsCount = dayTests.filter(test => test.subject === subject).length;
                 const weekTestsCount = weekTests.filter(test => test.subject === subject).length;
                 summaryHTML += `<tr><td>${subject}</td><td>${dayTestsCount}</td><td>${weekTestsCount}</td></tr>`;
@@ -894,7 +902,7 @@
 
             flatpickr("#datePicker", {
                 dateFormat: "Y-m-d",
-                defaultDate: "today",
+                defaultDate: selectedDate,
                 onChange: function(selectedDates, dateStr) {
                     selectedDate = dateStr;
                     updateStats();
@@ -904,7 +912,7 @@
 
             flatpickr("#weekPicker", {
                 dateFormat: "Y-m-d",
-                defaultDate: "today",
+                defaultDate: selectedDate,
                 weekNumbers: true,
                 onChange: function(selectedDates, dateStr) {
                     selectedWeekStart = getWeekStart(new Date(dateStr)).toISOString().split('T')[0];
@@ -914,7 +922,7 @@
 
             flatpickr("#reportWeekPicker", {
                 dateFormat: "Y-m-d",
-                defaultDate: "today",
+                defaultDate: selectedDate,
                 weekNumbers: true,
             });
 
@@ -938,7 +946,7 @@
         window.importData = importData;
         window.signUp = signUp;
         window.signIn = signIn;
-        window.signOutUser = signOutUser;
+        window.signOut = signOutUser;
     </script>
 </body>
 </html>
