@@ -54,7 +54,7 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .task-item, .subject-item, .test-item {
+        .task-item, .subject-item, .test-item, .todo-item {
             margin-bottom: 15px;
             padding: 15px;
             background-color: #ecf0f1;
@@ -62,7 +62,7 @@
             transition: var(--transition);
         }
 
-        .task-item:hover, .subject-item:hover, .test-item:hover {
+        .task-item:hover, .subject-item:hover, .test-item:hover, .todo-item:hover {
             background-color: #e0e6e8;
         }
 
@@ -168,6 +168,11 @@
         #authSection input {
             margin-right: 10px;
         }
+
+        .completed-task {
+            text-decoration: line-through;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -186,6 +191,14 @@
             <button onclick="exportData()">Export Data</button>
             <button onclick="document.getElementById('importInput').click()">Import Data</button>
             <input type="file" id="importInput" accept=".json" onchange="importData(event)">
+        </div>
+
+        <div class="section">
+            <h2>Todo List</h2>
+            <div id="todoInputs"></div>
+            <button onclick="addTodo()">Add Todo</button>
+            <button onclick="saveTodos()">Save Todos</button>
+            <span id="todoFeedback" class="feedback">Saved!</span>
         </div>
 
         <div class="section">
@@ -353,6 +366,24 @@
             });
         }
 
+        function addTodo() {
+            const todoInputs = document.getElementById('todoInputs');
+            const todoIndex = todoInputs.children.length;
+            
+            const todoDiv = document.createElement('div');
+            todoDiv.className = 'todo-item';
+            todoDiv.innerHTML = `
+                <input type="text" placeholder="Todo description" id="todo${todoIndex}">
+                <input type="number" placeholder="Approximate time (minutes)" id="todoTime${todoIndex}">
+                <select id="todoStatus${todoIndex}">
+                    <option value="incomplete">Incomplete</option>
+                    <option value="partially">Partially Complete</option>
+                    <option value="complete">Complete</option>
+                </select>
+            `;
+            todoInputs.appendChild(todoDiv);
+        }
+
         function addTask() {
             const taskInputs = document.getElementById('taskInputs');
             const taskIndex = taskInputs.children.length;
@@ -360,11 +391,26 @@
             const taskDiv = document.createElement('div');
             taskDiv.className = 'task-item';
             taskDiv.innerHTML = `
-                <input type="text" placeholder="Task description" id="task${taskIndex}">
+                <select id="taskTodo${taskIndex}">
+                    <option value="">Select a todo</option>
+                    ${getTodoOptions()}
+                </select>
                 <input type="number" placeholder="Expected time (minutes)" id="expected${taskIndex}">
                 <input type="number" placeholder="Actual time (minutes)" id="actual${taskIndex}">
             `;
             taskInputs.appendChild(taskDiv);
+
+            // Add event listener to update expected time when a todo is selected
+            document.getElementById(`taskTodo${taskIndex}`).addEventListener('change', function() {
+                const selectedTodo = this.value;
+                const expectedTimeInput = document.getElementById(`expected${taskIndex}`);
+                if (selectedTodo) {
+                    const todoTime = dailyStats[selectedDate]?.todos?.find(todo => todo.description === selectedTodo)?.approximateTime;
+                    if (todoTime) {
+                        expectedTimeInput.value = todoTime;
+                    }
+                }
+            });
         }
 
         function addSubject() {
@@ -409,7 +455,8 @@
             let tasks = [];
 
             taskInputs.forEach((taskInput, index) => {
-                const description = taskInput.querySelector(`#task${index}`).value;
+                const todoSelect = taskInput.querySelector(`#taskTodo${index}`);
+                const description = todoSelect.options[todoSelect.selectedIndex].text;
                 const expectedTime = parseFloat(taskInput.querySelector(`#expected${index}`).value) || 0;
                 const actualTime = parseFloat(taskInput.querySelector(`#actual${index}`).value) || 0;
                 totalExpected += expectedTime;
@@ -508,6 +555,54 @@
                 });
         }
 
+        function saveTodos() {
+            if (!currentUser) {
+                alert("Please sign in to save data.");
+                return;
+            }
+
+            const todoInputs = document.querySelectorAll('.todo-item');
+            let dayStats = dailyStats[selectedDate] || {};
+            dayStats.todos = [];
+
+            todoInputs.forEach((todoInput, index) => {
+                const description = todoInput.querySelector(`#todo${index}`).value;
+                const approximateTime = parseFloat(todoInput.querySelector(`#todoTime${index}`).value) || 0;
+                const status = todoInput.querySelector(`#todoStatus${index}`).value;
+
+                if (description) {
+                    dayStats.todos.push({ description, approximateTime, status });
+                }
+            });
+
+            dailyStats[selectedDate] = dayStats;
+
+            // Move incomplete and partially complete todos to the next day
+            const nextDate = new Date(selectedDate);
+            nextDate.setDate(nextDate.getDate() + 1);
+            const nextDateString = nextDate.toISOString().split('T')[0];
+
+            if (!dailyStats[nextDateString]) dailyStats[nextDateString] = {};
+            if (!dailyStats[nextDateString].todos) dailyStats[nextDateString].todos = [];
+
+            dayStats.todos.forEach(todo => {
+                if (todo.status === 'incomplete' || todo.status === 'partially') {
+                    dailyStats[nextDateString].todos.push(todo);
+                }
+            });
+
+            // Save to Firebase
+            set(ref(database, `users/${currentUser.uid}/dailyStats`), dailyStats)
+                .then(() => {
+                    updateStats();
+                    showFeedback('todoFeedback');
+                })
+                .catch((error) => {
+                    console.error("Error saving data: ", error);
+                    alert("Error saving data. Please try again.");
+                });
+        }
+
         function updateStats() {
             const dayStats = dailyStats[selectedDate] || {};
             document.getElementById('selectedDate').textContent = selectedDate;
@@ -519,16 +614,25 @@
             updateWeeklySummary();
             updateDailyStatsInputs();
             updateTaskInputs();
+            updateTodoInputs();
         }
 
         function updateDailyStatsInputs() {
             const dayStats = dailyStats[selectedDate]?.subjects || {};
-            const subjectInputs = document.querySelectorAll('.subject-item');
+            const subjectInputs = document.getElementById('subjectInputs');
+            subjectInputs.innerHTML = '';
             
-            subjectInputs.forEach(subjectInput => {
-                const subject = subjectInput.querySelector('select').value;
-                subjectInput.querySelectorAll('input')[0].value = dayStats[subject]?.hours || '';
-                subjectInput.querySelectorAll('input')[1].value = dayStats[subject]?.questions || '';
+            subjects.forEach(subject => {
+                const subjectDiv = document.createElement('div');
+                subjectDiv.className = 'subject-item';
+                subjectDiv.innerHTML = `
+                    <select>
+                        <option value="${subject}">${subject}</option>
+                    </select>
+                    <input type="number" placeholder="Study hours" step="0.5" value="${dayStats[subject]?.hours || ''}">
+                    <input type="number" placeholder="Questions solved" value="${dayStats[subject]?.questions || ''}">
+                `;
+                subjectInputs.appendChild(subjectDiv);
             });
         }
 
@@ -541,16 +645,57 @@
                 const taskDiv = document.createElement('div');
                 taskDiv.className = 'task-item';
                 taskDiv.innerHTML = `
-                    <input type="text" placeholder="Task description" id="task${index}" value="${task.description}">
+                    <select id="taskTodo${index}">
+                        <option value="">${task.description}</option>
+                        ${getTodoOptions()}
+                    </select>
                     <input type="number" placeholder="Expected time (minutes)" id="expected${index}" value="${task.expectedTime}">
                     <input type="number" placeholder="Actual time (minutes)" id="actual${index}" value="${task.actualTime}">
                 `;
                 taskInputs.appendChild(taskDiv);
+
+                // Add event listener to update expected time when a todo is selected
+                document.getElementById(`taskTodo${index}`).addEventListener('change', function() {
+                    const selectedTodo = this.value;
+                    const expectedTimeInput = document.getElementById(`expected${index}`);
+                    if (selectedTodo) {
+                        const todoTime = dailyStats[selectedDate]?.todos?.find(todo => todo.description === selectedTodo)?.approximateTime;
+                        if (todoTime) {
+                            expectedTimeInput.value = todoTime;
+                        }
+                    }
+                });
             });
 
             // Add an empty task input if there are no tasks
             if (tasks.length === 0) {
                 addTask();
+            }
+        }
+
+        function updateTodoInputs() {
+            const todoInputs = document.getElementById('todoInputs');
+            todoInputs.innerHTML = '';
+            const todos = dailyStats[selectedDate]?.todos || [];
+
+            todos.forEach((todo, index) => {
+                const todoDiv = document.createElement('div');
+                todoDiv.className = 'todo-item';
+                todoDiv.innerHTML = `
+                    <input type="text" placeholder="Todo description" id="todo${index}" value="${todo.description}" ${todo.status === 'complete' ? 'class="completed-task"' : ''}>
+                    <input type="number" placeholder="Approximate time (minutes)" id="todoTime${index}" value="${todo.approximateTime}">
+                    <select id="todoStatus${index}">
+                        <option value="incomplete" ${todo.status === 'incomplete' ? 'selected' : ''}>Incomplete</option>
+                        <option value="partially" ${todo.status === 'partially' ? 'selected' : ''}>Partially Complete</option>
+                        <option value="complete" ${todo.status === 'complete' ? 'selected' : ''}>Complete</option>
+                    </select>
+                `;
+                todoInputs.appendChild(todoDiv);
+            });
+
+            // Add an empty todo input if there are no todos
+            if (todos.length === 0) {
+                addTodo();
             }
         }
 
@@ -890,6 +1035,11 @@
             }
         }
 
+        function getTodoOptions() {
+            const todos = dailyStats[selectedDate]?.todos || [];
+            return todos.map(todo => `<option value="${todo.description}">${todo.description}</option>`).join('');
+        }
+
         // Initialize
         function init() {
             // Check if required libraries are loaded
@@ -927,6 +1077,7 @@
             });
 
             addSubject();
+            addTodo();
             updateStats();
             updateChart();
         }
@@ -938,9 +1089,11 @@
         window.addTask = addTask;
         window.addSubject = addSubject;
         window.addTest = addTest;
+        window.addTodo = addTodo;
         window.calculateEfficiency = calculateEfficiency;
         window.saveDailyStats = saveDailyStats;
         window.saveTests = saveTests;
+        window.saveTodos = saveTodos;
         window.generateReport = generateReport;
         window.exportData = exportData;
         window.importData = importData;
