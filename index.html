@@ -3,958 +3,1457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Productivity and Test Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <title>Daily Activity Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        // Initialize jsPDF globally
+        window.jspdf = window.jspdf || {};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --background-color: #f4f4f4;
-            --card-background: #ffffff;
-            --text-color: #333333;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --background: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #22c55e;
+            --warning: #eab308;
+            --gradient-1: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --card-hover: rgba(255, 255, 255, 0.1);
+            --animation-timing: 0.3s ease;
+            --border-radius-lg: 1.5rem;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            font-family: 'Roboto', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            max-width: 1200px;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: var(--background-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
         }
 
-        h1, h2, h3 {
-            color: var(--secondary-color);
-            margin-bottom: 20px;
+        .card {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: transform var(--animation-timing), box-shadow var(--animation-timing);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
         }
 
-        .section {
-            background-color: var(--card-background);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            box-shadow: var(--box-shadow);
-            margin-bottom: 30px;
-            transition: var(--transition);
-        }
-
-        .section:hover {
+        .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-lg);
         }
 
-        .task-item, .subject-item, .test-item {
-            margin-bottom: 15px;
-            padding: 15px;
-            background-color: #ecf0f1;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
+        h1, h2 {
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text);
         }
 
-        .task-item:hover, .subject-item:hover, .test-item:hover {
-            background-color: #e0e6e8;
+        .form-group {
+            margin-bottom: 1rem;
         }
 
-        input, select, button, textarea {
-            margin: 5px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 14px;
-            transition: var(--transition);
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-light);
         }
 
-        input:focus, select:focus, textarea:focus {
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all var(--animation-timing);
+            position: relative;
+            overflow: hidden;
+        }
+
+        input:focus, select:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            transform: scale(1.01);
         }
 
         button {
-            background-color: var(--primary-color);
-            color: #fff;
+            width: 100%;
+            padding: 0.75rem;
             border: none;
-            padding: 12px 20px;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: var(--transition);
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            transition: all var(--animation-timing);
+            position: relative;
+            overflow: hidden;
         }
 
-        button:hover {
-            background-color: #2980b9;
+        button.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        button.danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: all var(--animation-timing);
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
+            padding: 1.25rem;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-item:hover {
+            background: var(--background);
+            transform: scale(1.02);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: color 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 100%;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all var(--animation-timing);
+        }
+
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .stats-card {
+            background: var(--gradient-1);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
+            pointer-events: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            transition: transform var(--animation-timing);
+            border: 1px solid var(--glass-border);
+            position: relative;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            background: var(--glass-bg);
+        }
+
+        .rating {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+            perspective: 1000px;
+        }
+
+        .chart {
+            background: white;
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--animation-timing);
+            transform-style: preserve-3d;
+        }
+
+        .chart:hover {
+            transform: rotateX(5deg) rotateY(5deg);
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        select {
+            background-color: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .sleep-card {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+        }
+
+        .sleep-card label {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sleep-card input {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .sleep-card input:focus {
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+
+        button.loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        button.loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stopwatch-display {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        #stopwatchTime {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+
+        .session-logs {
+            margin-top: 2rem;
+        }
+
+        .session-item {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--background);
+            transition: transform var(--animation-timing);
+        }
+
+        .session-item:hover {
             transform: translateY(-2px);
         }
 
-        button:active {
-            transform: translateY(0);
+        .break-session {
+            color: var(--text-light);
+            font-style: italic;
         }
 
-        .chart-container {
-            width: 100%;
-            height: 400px;
-            margin-top: 30px;
+        #activityList {
+            margin-top: 1rem;
         }
 
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .activity-item {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: transform var(--animation-timing);
         }
 
-        .summary-table th, .summary-table td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
+        .activity-item:hover {
+            transform: translateY(-2px);
         }
 
-        .summary-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+        button + button {
+            margin-top: 0.5rem;
         }
 
-        .summary-table tr:nth-child(even) {
-            background-color: #f8f8f8;
+        .form-group + h2 {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
         }
 
-        .feedback {
-            color: #27ae60;
-            margin-left: 10px;
-            opacity: 0;
-            transition: opacity 0.5s;
+        .stat-item {
+            position: relative;
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .section {
-                padding: 20px;
-            }
+        .stat-item .btn-icon {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 4px;
+            font-size: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
         }
 
-        .import-export-section {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+        .stat-item .btn-icon:hover {
+            opacity: 1;
         }
 
-        .import-export-section button {
-            flex: 1;
-            margin: 0 10px;
+        .container button[onclick*="index(2)"] {
+            background: var(--gradient-1);
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        #importInput {
-            display: none;
-        }
-
-        #authSection {
-            margin-bottom: 20px;
-        }
-
-        #authSection input {
-            margin-right: 10px;
+        .container button[onclick*="index(2)"]:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
     </style>
 </head>
 <body>
-    <h1>Advanced Productivity and Test Tracker</h1>
-    
-    <div id="authSection">
-        <input type="email" id="emailInput" placeholder="Email">
-        <input type="password" id="passwordInput" placeholder="Password">
-        <button onclick="signIn()">Sign In</button>
-        <button onclick="signUp()">Sign Up</button>
-        <button onclick="signOut()">Sign Out</button>
-    </div>
+    <div class="container">
+        <div class="card">
+            <h1>Log Activity</h1>
+            <form id="activityForm">
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="activity">Activity</label>
+                    <input type="text" id="activity" required>
+                </div>
+                <div class="form-group">
+                    <label for="activityType">Activity Type</label>
+                    <select id="activityType" required>
+                        <option value="productive">Productive Work</option>
+                        <option value="relax">Relaxation</option>
+                        <option value="waste">Time Waste</option>
+                        <option value="daily">Daily Activities</option>
+                        <option value="sleep">Sleep</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group time-inputs">
+                    <div>
+                        <label for="startTime">Start Time</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+                    <div>
+                        <label for="endTime">End Time</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                </div>
+                <button type="submit" class="primary">Log Activity</button>
+            </form>
 
-    <div id="mainContent" style="display: none;">
-        <div class="import-export-section">
-            <button onclick="exportData()">Export Data</button>
-            <button onclick="document.getElementById('importInput').click()">Import Data</button>
-            <input type="file" id="importInput" accept=".json" onchange="importData(event)">
-        </div>
-
-        <div class="section">
-            <h2>Task Management</h2>
-            <div id="taskInputs"></div>
-            <button onclick="addTask()">Add Task</button>
-            <button onclick="calculateEfficiency()">Calculate Efficiency</button>
-            <span id="efficiencyFeedback" class="feedback">Saved!</span>
-        </div>
-
-        <div class="section">
-            <h2>Daily Stats</h2>
-            <input type="text" id="datePicker" placeholder="Select date">
-            <div id="subjectInputs"></div>
-            <button onclick="addSubject()">Add Subject</button>
-            <button onclick="saveDailyStats()">Save Daily Stats</button>
-            <span id="dailyStatsFeedback" class="feedback">Saved!</span>
-        </div>
-
-        <div class="section">
-            <h2>Test Tracking</h2>
-            <div id="testInputs"></div>
-            <button onclick="addTest()">Add Test</button>
-            <button onclick="saveTests()">Save Tests</button>
-            <span id="testsFeedback" class="feedback">Saved!</span>
-        </div>
-
-        <div class="section">
-            <h2>Overall Stats</h2>
-            <p>Selected Date: <span id="selectedDate"></span></p>
-            <p>Efficiency: <span id="dayEfficiency">-</span></p>
-            <h3>Study Hours</h3>
-            <div id="studyHoursSummary"></div>
-            <h3>Questions Solved</h3>
-            <div id="questionsSummary"></div>
-            <h3>Tests</h3>
-            <div id="testsSummary"></div>
-        </div>
-
-        <div class="section">
-            <h2>Weekly Summary</h2>
-            <input type="text" id="weekPicker" placeholder="Select week">
-            <div id="weeklySummary"></div>
-        </div>
-
-        <div class="section">
-            <h2>Efficiency Trend</h2>
-            <div class="chart-container">
-                <canvas id="efficiencyChart"></canvas>
+            <div style="margin-top: 2rem;">
+                <h2>View Activities</h2>
+                <div class="form-group">
+                    <label for="viewDate">Select Date</label>
+                    <input type="date" id="viewDate" required>
+                </div>
+                <button onclick="exportToPDF()" class="primary" style="margin-bottom: 1rem;">Export Report</button>
+                <div id="activityList">
+                    <!-- Activities will be listed here -->
+                </div>
             </div>
         </div>
+        <div class="card">
+            <h2>Stopwatch</h2>
+            <div class="stopwatch-display">
+                <div id="stopwatchTime">00:00</div>
+                <button id="stopwatchButton" class="primary">Start Session</button>
+            </div>
+            <div id="sessionLogs" class="session-logs">
+                <h3>Today's Sessions</h3>
+                <!-- Sessions will be listed here -->
+            </div>
+        </div>
+        <div class="card stats-card">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>Today's Rating</h3>
+                    <div class="rating" id="todayRating">--</div>
+                </div>
+                <div class="stat-item">
+                    <h3>Weekly Rating</h3>
+                    <div class="rating" id="weekRating">--</div>
+                </div>
+                <div class="stat-item">
+                    <h3>Monthly Rating</h3>
+                    <div class="rating" id="monthRating">--</div>
+                </div>
+                <div class="stat-item">
+                    <h3>Longest Session</h3>
+                    <div class="rating" id="longestSession">--</div>
+                    <button onclick="editLongestSession()" class="btn-icon">✏️</button>
+                </div>
+            </div>
 
-        <div class="section">
-            <h2>Download Report</h2>
-            <input type="text" id="reportWeekPicker" placeholder="Select week for report">
-            <button onclick="generateReport()">Generate and Download Report</button>
+            <div class="averages-container">
+                <div class="averages-section">
+                    <h3>Weekly Averages</h3>
+                    <div class="averages-grid">
+                        <div class="average-item" id="weeklyProductiveAvg">Productive: -- hrs/day</div>
+                        <div class="average-item" id="weeklyRelaxAvg">Relaxation: -- hrs/day</div>
+                        <div class="average-item" id="weeklyWasteAvg">Time Waste: -- hrs/day</div>
+                        <div class="average-item" id="weeklyDailyAvg">Daily Activities: -- hrs/day</div>
+                        <div class="average-item" id="weeklySleepAvg">Sleep: -- hrs/day</div>
+                        <div class="average-item" id="weeklyOtherAvg">Other: -- hrs/day</div>
+                    </div>
+                </div>
+                
+                <div class="averages-section">
+                    <h3>Monthly Averages</h3>
+                    <div class="averages-grid">
+                        <div class="average-item" id="monthlyProductiveAvg">Productive: -- hrs/day</div>
+                        <div class="average-item" id="monthlyRelaxAvg">Relaxation: -- hrs/day</div>
+                        <div class="average-item" id="monthlyWasteAvg">Time Waste: -- hrs/day</div>
+                        <div class="average-item" id="monthlyDailyAvg">Daily Activities: -- hrs/day</div>
+                        <div class="average-item" id="monthlySleepAvg">Sleep: -- hrs/day</div>
+                        <div class="average-item" id="monthlyOtherAvg">Other: -- hrs/day</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="charts-container">
+                <div class="chart">
+                    <canvas id="activityPieChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Activity</h2>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editActivity">Activity</label>
+                    <input type="text" id="editActivity" required>
+                </div>
+                <div class="form-group">
+                    <label for="editStartTime">Start Time</label>
+                    <input type="time" id="editStartTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEndTime">End Time</label>
+                    <input type="time" id="editEndTime" required>
+                </div>
+                <button type="submit" class="primary">Update Activity</button>
+            </form>
+        </div>
+    </div>
 
-        // Your web app's Firebase configuration
+    <div class="navigation-buttons" style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;">
+        <button onclick="window.location.href='index(2).html'" class="primary">
+            Go to Study Tracker
+        </button>
+        <button onclick="window.location.href='index.html'" class="primary">
+            Go to Activity Logger
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            getDocs, 
+            orderBy,
+            deleteDoc,
+            doc,
+            updateDoc,
+            setDoc,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
         const firebaseConfig = {
-            apiKey: "AIzaSyCAANQOcvqF7xHu_20xCboIxvvZX92uo7w",
-            authDomain: "tracker-95814.firebaseapp.com",
-            databaseURL: "https://tracker-95814-default-rtdb.firebaseio.com",
-            projectId: "tracker-95814",
-            storageBucket: "tracker-95814.appspot.com",
-            messagingSenderId: "5634823180",
-            appId: "1:5634823180:web:56f73654de4eee8d4aca29"
+            apiKey: "AIzaSyAekqsOP-0gj6KoQochCmYlLnAJrD-kGsE",
+            authDomain: "sssss-3adc6.firebaseapp.com",
+            projectId: "sssss-3adc6",
+            storageBucket: "sssss-3adc6.firebasestorage.app",
+            messagingSenderId: "607293493954",
+            appId: "1:607293493954:web:f58c2c031b92bc98b1a15b"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        let dailyStats = {};
-        let subjects = ['Chemistry', 'Physics', 'Maths', 'Tests', 'Class'];
-        let selectedDate = getCurrentDate();
-        let selectedWeekStart = getWeekStart(new Date()).toISOString().split('T')[0];
-        let efficiencyChart;
-        let currentUser = null;
+        /* Make Firebase functions available globally */
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.where = where;
+        window.getDocs = getDocs;
+        window.orderBy = orderBy;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
 
-        function getCurrentDate() {
-            const now = new Date();
-            if (now.getHours() < 4) {
-                now.setDate(now.getDate() - 1);
-            }
-            return now.toISOString().split('T')[0];
+        /* Utility functions for time calculations */
+        function calculateDuration(startTime, endTime) {
+            if (!startTime || !endTime) return 0;
+            const start = new Date(`1970-01-01T${startTime}`);
+            const end = new Date(`1970-01-01T${endTime}`);
+            return (end - start) / (1000 * 60 * 60); // Duration in hours
         }
 
-        function signUp() {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    // Signed up 
-                    const user = userCredential.user;
-                    alert('User created successfully!');
-                })
-                .catch((error) => {
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    alert('Error: ' + errorMessage);
-                });
-        }
+        function calculateDayRating(activities) {
+            let productiveHours = 0;
+            let wastedHours = 0;
+            let relaxHours = 0;
 
-        function signIn() {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    // Signed in 
-                    const user = userCredential.user;
-                    alert('Signed in successfully!');
-                })
-                .catch((error) => {
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    alert('Error: ' + errorMessage);
-                });
-        }
-
-        function signOutUser() {
-            signOut(auth).then(() => {
-                // Sign-out successful.
-                alert('Signed out successfully!');
-                document.getElementById('mainContent').style.display = 'none';
-            }).catch((error) => {
-                // An error happened.
-                alert('Error signing out: ' + error.message);
+            activities.forEach(activity => {
+                const duration = calculateDuration(activity.startTime, activity.endTime);
+                switch(activity.activityType) {
+                    case 'productive':
+                        productiveHours += duration;
+                        break;
+                    case 'waste':
+                        wastedHours += duration;
+                        break;
+                    case 'relax':
+                        relaxHours += duration;
+                        break;
+                }
             });
+
+            // Rating calculation (adjust weights as needed)
+            let rating = 0;
+            rating += (productiveHours >= 12) ? 100 : (productiveHours / 12) * 100; // Max score for 12+ productive hours
+            rating -= (wastedHours * 10); // Penalty for wasted time
+            rating += (relaxHours <= 3) ? (relaxHours * 5) : 15; // Bonus for balanced relaxation
+
+            return Math.max(0, Math.min(100, Math.round(rating)));
         }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is signed in
-                currentUser = user;
-                document.getElementById('mainContent').style.display = 'block';
-                loadUserData();
-            } else {
-                // User is signed out
-                currentUser = null;
-                document.getElementById('mainContent').style.display = 'none';
+        // Activity logging enhancement
+        document.getElementById('activityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            if (startTime >= endTime) {
+                alert('End time must be after start time.');
+                return;
+            }
+
+            try {
+                const activityData = {
+                    date: document.getElementById('date').value,
+                    activity: document.getElementById('activity').value,
+                    activityType: document.getElementById('activityType').value,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: calculateDuration(startTime, endTime),
+                    timestamp: new Date().toISOString()
+                };
+
+                await addDoc(collection(db, "activities"), activityData);
+                alert('Activity logged successfully!');
+                document.getElementById('activityForm').reset();
+                document.getElementById('date').valueAsDate = new Date();
+                await loadActivities();
+                updateAllStats();
+            } catch (error) {
+                console.error("Error adding activity: ", error);
+                alert('Error logging activity');
             }
         });
 
-        function loadUserData() {
-            if (!currentUser) return;
-
-            get(child(ref(database), `users/${currentUser.uid}/dailyStats`)).then((snapshot) => {
-                if (snapshot.exists()) {
-                    dailyStats = snapshot.val();
-                    updateStats();
-                    updateChart();
-                }
-            }).catch((error) => {
-                console.error(error);
-                alert("Error loading data. Please refresh the page.");
-            });
+        // Statistics update functions
+        async function updateAllStats() {
+            await Promise.all([
+                updateDayStats(),
+                updateWeekStats(),
+                updateMonthStats(),
+                updateCharts(),
+                updateEfficiencyStats()
+            ]);
         }
 
-        function addTask() {
-            const taskInputs = document.getElementById('taskInputs');
-            const taskIndex = taskInputs.children.length;
-            
-            const taskDiv = document.createElement('div');
-            taskDiv.className = 'task-item';
-            taskDiv.innerHTML = `
-                <input type="text" placeholder="Task description" id="task${taskIndex}">
-                <input type="number" placeholder="Expected time (minutes)" id="expected${taskIndex}">
-                <input type="number" placeholder="Actual time (minutes)" id="actual${taskIndex}">
-            `;
-            taskInputs.appendChild(taskDiv);
+        async function updateDayStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const activities = await getDayActivities(today);
+            const rating = calculateDayRating(activities);
+            document.getElementById('todayRating').textContent = rating;
         }
 
-        function addSubject() {
-            const subjectInputs = document.getElementById('subjectInputs');
-            const subjectDiv = document.createElement('div');
-            subjectDiv.className = 'subject-item';
-            subjectDiv.innerHTML = `
-                <select>
-                    ${subjects.map(subject => `<option value="${subject}">${subject}</option>`).join('')}
-                </select>
-                <input type="number" placeholder="Study hours" step="0.5">
-                <input type="number" placeholder="Questions solved">
-            `;
-            subjectInputs.appendChild(subjectDiv);
+        async function getDayActivities(date) {
+            const q = query(
+                collection(db, "activities"),
+                where("date", "==", date)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => doc.data());
         }
 
-        function addTest() {
-            const testInputs = document.getElementById('testInputs');
-            const testDiv = document.createElement('div');
-            testDiv.className = 'test-item';
-            testDiv.innerHTML = `
-                <select>
-                    ${subjects.slice(0, 4).map(subject => `<option value="${subject}">${subject}</option>`).join('')}
-                </select>
-                <input type="text" placeholder="Topic">
-                <input type="number" placeholder="Marks Scored">
-                <input type="number" placeholder="Max Marks">
-                <textarea placeholder="Mistakes/Notes"></textarea>
-            `;
-            testInputs.appendChild(testDiv);
+        // Update weekly statistics
+        async function updateWeekStats() {
+            const today = new Date();
+            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+            const activities = await getActivitiesInRange(startOfWeek, new Date());
+            const rating = calculateDayRating(activities);
+            document.getElementById('weekRating').textContent = rating;
         }
 
-        function calculateEfficiency() {
-            if (!currentUser) {
-                alert("Please sign in to save data.");
-                return;
-            }
-
-            const taskInputs = document.querySelectorAll('.task-item');
-            let totalExpected = 0;
-            let totalActual = 0;
-            let tasks = [];
-
-            taskInputs.forEach((taskInput, index) => {
-                const description = taskInput.querySelector(`#task${index}`).value;
-                const expectedTime = parseFloat(taskInput.querySelector(`#expected${index}`).value) || 0;
-                const actualTime = parseFloat(taskInput.querySelector(`#actual${index}`).value) || 0;
-                totalExpected += expectedTime;
-                totalActual += actualTime;
-
-                tasks.push({ description, expectedTime, actualTime });
-            });
-
-            const efficiency = totalActual > 0 ? (totalExpected / totalActual) * 100 : 0;
-            document.getElementById('dayEfficiency').textContent = `${efficiency.toFixed(2)}%`;
-
-            if (!dailyStats[selectedDate]) dailyStats[selectedDate] = {};
-            dailyStats[selectedDate].efficiency = efficiency;
-            dailyStats[selectedDate].tasks = tasks;
-
-            // Save to Firebase
-            set(ref(database, `users/${currentUser.uid}/dailyStats/${selectedDate}`), dailyStats[selectedDate])
-                .then(() => {
-                    updateStats();
-                    updateChart();
-                    showFeedback('efficiencyFeedback');
-                })
-                .catch((error) => {
-                    console.error("Error saving data: ", error);
-                    alert("Error saving data. Please try again.");
-                });
+        // Update monthly statistics
+        async function updateMonthStats() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const activities = await getActivitiesInRange(startOfMonth, new Date());
+            const rating = calculateDayRating(activities);
+            document.getElementById('monthRating').textContent = rating;
         }
 
-        function saveDailyStats() {
-            if (!currentUser) {
-                alert("Please sign in to save data.");
-                return;
-            }
+        // Get activities in a date range
+        async function getActivitiesInRange(startDate, endDate) {
+            const q = query(
+                collection(db, "activities"),
+                where("date", ">=", startDate.toISOString().split('T')[0]),
+                where("date", "<=", endDate.toISOString().split('T')[0])
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => doc.data());
+        }
 
-            const subjectInputs = document.querySelectorAll('.subject-item');
-            let dayStats = dailyStats[selectedDate] || {};
-            dayStats.subjects = {};
+        // Single definition of updateCharts
+        async function updateCharts(selectedDate) {
+            const date = selectedDate || document.getElementById('viewDate').value;
+            const activities = await getDayActivities(date);
 
-            subjectInputs.forEach(subjectInput => {
-                const subject = subjectInput.querySelector('select').value;
-                const hours = parseFloat(subjectInput.querySelectorAll('input')[0].value) || 0;
-                const questions = parseInt(subjectInput.querySelectorAll('input')[1].value) || 0;
+            const activityCounts = {
+                productive: 0,
+                relax: 0,
+                waste: 0,
+                daily: 0,
+                sleep: 0,
+                other: 0
+            };
 
-                if (hours > 0 || questions > 0) {
-                    dayStats.subjects[subject] = { hours, questions };
-                }
+            const durationByType = {
+                productive: 0,
+                relax: 0,
+                waste: 0,
+                daily: 0,
+                sleep: 0,
+                other: 0
+            };
+
+            activities.forEach(activity => {
+                activityCounts[activity.activityType]++;
+                durationByType[activity.activityType] += activity.duration;
             });
 
-            dailyStats[selectedDate] = dayStats;
+            const totalDuration = Object.values(durationByType).reduce((a, b) => a + b, 0);
 
-            // Save to Firebase
-            set(ref(database, `users/${currentUser.uid}/dailyStats/${selectedDate}`), dailyStats[selectedDate])
-                .then(() => {
-                    updateStats();
-                    showFeedback('dailyStatsFeedback');
-                })
-                .catch((error) => {
-                    console.error("Error saving data: ", error);
-                    alert("Error saving data. Please try again.");
-                });
-        }
-
-        function saveTests() {
-            if (!currentUser) {
-                alert("Please sign in to save data.");
-                return;
-            }
-
-            const testInputs = document.querySelectorAll('.test-item');
-            let dayStats = dailyStats[selectedDate] || {};
-            dayStats.tests = [];
-
-            testInputs.forEach(testInput => {
-                const subject = testInput.querySelector('select').value;
-                const topic = testInput.querySelectorAll('input')[0].value;
-                const marksScored = parseFloat(testInput.querySelectorAll('input')[1].value) || 0;
-                const maxMarks = parseFloat(testInput.querySelectorAll('input')[2].value) || 0;
-                const mistakes = testInput.querySelector('textarea').value;
-
-                if (topic && maxMarks > 0) {
-                    dayStats.tests.push({ subject, topic, marksScored, maxMarks, mistakes });
-                }
-            });
-
-            dailyStats[selectedDate] = dayStats;
-
-            // Save to Firebase
-            set(ref(database, `users/${currentUser.uid}/dailyStats/${selectedDate}`), dailyStats[selectedDate])
-                .then(() => {
-                    updateStats();
-                    showFeedback('testsFeedback');
-                })
-                .catch((error) => {
-                    console.error("Error saving data: ", error);
-                    alert("Error saving data. Please try again.");
-                });
-        }
-
-        function updateStats() {
-            const dayStats = dailyStats[selectedDate] || {};
-            document.getElementById('selectedDate').textContent = selectedDate;
-            document.getElementById('dayEfficiency').textContent = dayStats.efficiency ? `${dayStats.efficiency.toFixed(2)}%` : '-';
-
-            updateSummary('studyHoursSummary', 'hours');
-            updateSummary('questionsSummary', 'questions');
-            updateTestsSummary();
-            updateWeeklySummary();
-            updateDailyStatsInputs();
-            updateTaskInputs();
-        }
-
-        function updateDailyStatsInputs() {
-            const dayStats = dailyStats[selectedDate]?.subjects || {};
-            const subjectInputs = document.getElementById('subjectInputs');
-            subjectInputs.innerHTML = '';
-            
-            subjects.forEach(subject => {
-                const subjectDiv = document.createElement('div');
-                subjectDiv.className = 'subject-item';
-                subjectDiv.innerHTML = `
-                    <select>
-                        <option value="${subject}">${subject}</option>
-                    </select>
-                    <input type="number" placeholder="Study hours" step="0.5" value="${dayStats[subject]?.hours || ''}">
-                    <input type="number" placeholder="Questions solved" value="${dayStats[subject]?.questions || ''}">
-                `;
-                subjectInputs.appendChild(subjectDiv);
-            });
-        }
-
-        function updateTaskInputs() {
-            const taskInputs = document.getElementById('taskInputs');
-            taskInputs.innerHTML = '';
-            const tasks = dailyStats[selectedDate]?.tasks || [];
-
-            tasks.forEach((task, index) => {
-                const taskDiv = document.createElement('div');
-                taskDiv.className = 'task-item';
-                taskDiv.innerHTML = `
-                    <input type="text" placeholder="Task description" id="task${index}" value="${task.description}">
-                    <input type="number" placeholder="Expected time (minutes)" id="expected${index}" value="${task.expectedTime}">
-                    <input type="number" placeholder="Actual time (minutes)" id="actual${index}" value="${task.actualTime}">
-                `;
-                taskInputs.appendChild(taskDiv);
-            });
-
-            // Add an empty task input if there are no tasks
-            if (tasks.length === 0) {
-                addTask();
+            const chart = Chart.getChart("activityPieChart");
+            if (chart) {
+                chart.data.datasets[0].data = Object.values(durationByType);
+                chart.options.plugins.tooltip.callbacks = {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw;
+                        const percentage = ((value / totalDuration) * 100).toFixed(2);
+                        return `${label}: ${percentage}% (${value.toFixed(1)} hrs)`;
+                    }
+                };
+                chart.update();
             }
         }
 
-        function updateSummary(elementId, statType) {
-            const summaryElement = document.getElementById(elementId);
-            const dayStats = dailyStats[selectedDate]?.subjects || {};
-            let totalDay = 0;
-            let totalWeek = 0;
-
-            let summaryHTML = '<table class="summary-table"><tr><th>Subject</th><th>Today</th><th>This Week</th></tr>';
-            subjects.forEach(subject => {
-                const dayValue = dayStats[subject]?.[statType] || 0;
-                const weekValue = getWeekTotal(subject, statType);
-                totalDay += dayValue;
-                totalWeek += weekValue;
-                summaryHTML += `<tr><td>${subject}</td><td>${dayValue}</td><td>${weekValue}</td></tr>`;
-            });
-            summaryHTML += `<tr><th>Total</th><th>${totalDay}</th><th>${totalWeek}</th></tr></table>`;
-            summaryElement.innerHTML = summaryHTML;
-        }
-
-        function updateTestsSummary() {
-            const summaryElement = document.getElementById('testsSummary');
-            const dayTests = dailyStats[selectedDate]?.tests || [];
-            const weekTests = getWeekTests();
-
-            let summaryHTML = '<table class="summary-table"><tr><th>Subject</th><th>Today\'s Tests</th><th>Week\'s Tests</th></tr>';
-            subjects.slice(0, 4).forEach(subject => {
-                const dayTestsCount = dayTests.filter(test => test.subject === subject).length;
-                const weekTestsCount = weekTests.filter(test => test.subject === subject).length;
-                summaryHTML += `<tr><td>${subject}</td><td>${dayTestsCount}</td><td>${weekTestsCount}</td></tr>`;
-            });
-            summaryHTML += `<tr><th>Total</th><th>${dayTests.length}</th><th>${weekTests.length}</th></tr></table>`;
-
-            summaryHTML += '<h4>Test Log:</h4>';
-            summaryHTML += '<table class="summary-table"><tr><th>Date</th><th>Subject</th><th>Topic</th><th>Marks</th><th>Mistakes</th></tr>';
-            weekTests.forEach(test => {
-                const testDate = Object.keys(dailyStats).find(date => dailyStats[date].tests && dailyStats[date].tests.includes(test));
-                summaryHTML += `<tr>
-                    <td>${testDate}</td>
-                    <td>${test.subject}</td>
-                    <td>${test.topic}</td>
-                    <td>${test.marksScored}/${test.maxMarks}</td>
-                    <td>${test.mistakes}</td>
-                </tr>`;
-            });
-            summaryHTML += '</table>';
-
-            summaryElement.innerHTML = summaryHTML;
-        }
-
-        function getWeekTotal(subject, statType) {
-            const weekStart = getWeekStart(new Date(selectedDate));
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-            let total = 0;
-            for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
-                const dateString = d.toISOString().split('T')[0];
-                total += dailyStats[dateString]?.subjects?.[subject]?.[statType] || 0;
-            }
-            return total;
-        }
-
-        function getWeekTests() {
-            const weekStart = getWeekStart(new Date(selectedDate));
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-            let weekTests = [];
-            for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
-                const dateString = d.toISOString().split('T')[0];
-                if (dailyStats[dateString]?.tests) {
-                    weekTests = weekTests.concat(dailyStats[dateString].tests);
-                }
-            }
-            return weekTests;
-        }
-
-        function updateWeeklySummary() {
-            const summaryElement = document.getElementById('weeklySummary');
-            const weekStart = getWeekStart(new Date(selectedWeekStart));
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-
-            let summaryHTML = `<h3>Week: ${weekStart.toDateString()} to ${weekEnd.toDateString()}</h3>`;
-            summaryHTML += '<table class="summary-table"><tr><th>Date</th><th>Efficiency</th><th>Total Hours</th><th>Total Questions</th><th>Tests Taken</th></tr>';
-            
-            for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
-                const dateString = d.toISOString().split('T')[0];
-                const dayStats = dailyStats[dateString] || {};
-                const efficiency = dayStats.efficiency ? `${dayStats.efficiency.toFixed(2)}%` : '-';
-                const totalHours = Object.values(dayStats.subjects || {}).reduce((sum, s) => sum + (s.hours || 0), 0);
-                const totalQuestions = Object.values(dayStats.subjects || {}).reduce((sum, s) => sum + (s.questions || 0), 0);
-                const testsTaken = dayStats.tests?.length || 0;
-                
-                summaryHTML += `<tr><td>${dateString}</td><td>${efficiency}</td><td>${totalHours}</td><td>${totalQuestions}</td><td>${testsTaken}</td></tr>`;
-            }
-            summaryHTML += '</table>';
-            summaryElement.innerHTML = summaryHTML;
-        }
-
-        function updateChart() {
-            const ctx = document.getElementById('efficiencyChart').getContext('2d');
-            const thirtyDaysAgo = new Date(selectedDate);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
-            const labels = [];
-            const data = [];
-            for (let d = new Date(thirtyDaysAgo); d <= new Date(selectedDate); d.setDate(d.getDate() + 1)) {
-                const dateString = d.toISOString().split('T')[0];
-                labels.push(dateString);
-                data.push(dailyStats[dateString]?.efficiency || 0);
-            }
-
-            if (efficiencyChart) {
-                efficiencyChart.destroy();
-            }
-
-            efficiencyChart = new Chart(ctx, {
-                type: 'line',
+        // Initialize charts (only the activity pie chart)
+        function initializeCharts() {
+            const ctxPie = document.getElementById('activityPieChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'pie',
                 data: {
-                    labels: labels,
+                    labels: ['Productive', 'Relaxation', 'Time Waste', 'Daily Activities', 'Sleep', 'Other'],
                     datasets: [{
-                        label: 'Efficiency (%)',
-                        data: data,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
+                        data: [0, 0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#22c55e', // Success
+                            '#6366f1', // Primary
+                            '#ef4444', // Danger
+                            '#eab308', // Warning
+                            '#64748b', // Text light
+                            '#9ca3af'  // Gray
+                        ]
                     }]
                 },
                 options: {
                     responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Activity Distribution'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const percentage = ((value / totalActivities) * 100).toFixed(2);
+                                    return `${label}: ${percentage}%`;
+                                }
+                            }
                         }
                     }
                 }
             });
         }
 
-        function showFeedback(elementId) {
-            const feedbackElement = document.getElementById(elementId);
-            feedbackElement.style.opacity = '1';
-            setTimeout(() => {
-                feedbackElement.style.opacity = '0';
-            }, 2000);
+        // Initialize everything when the page loads
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const stopwatchButton = document.getElementById('stopwatchButton');
+                if (stopwatchButton) {
+                    await loadStopwatchState();
+                    await loadTodaySessions();
+                }
+                
+                // Set default dates
+                const today = new Date();
+                const dateInput = document.getElementById('date');
+                const viewDateInput = document.getElementById('viewDate');
+                
+                if (dateInput) {
+                    dateInput.valueAsDate = today;
+                }
+                if (viewDateInput) {
+                    viewDateInput.valueAsDate = today;
+                }
+                
+                initializeCharts();
+                await loadActivities();
+                await updateAllStats();
+                
+                // Load longest session from localStorage
+                const savedLongestSession = localStorage.getItem('longestSession');
+                const longestSessionElement = document.getElementById('longestSession');
+                if (savedLongestSession && longestSessionElement) {
+                    longestSessionDuration = parseInt(savedLongestSession);
+                    longestSessionElement.textContent = (longestSessionDuration / 60).toFixed(1);
+                }
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            }
+        });
+
+        // Load activities for a specific date
+        async function loadActivities() {
+            const viewDate = document.getElementById('viewDate').value;
+            const activityList = document.getElementById('activityList');
+            
+            // Only try to update the list if the element exists
+            if (activityList) {
+                activityList.innerHTML = '';
+
+                try {
+                    const q = query(
+                        collection(db, "activities"),
+                        where("date", "==", viewDate),
+                        orderBy("startTime")
+                    );
+
+                    const querySnapshot = await getDocs(q);
+                    querySnapshot.forEach((doc) => {
+                        const activity = doc.data();
+                        const duration = activity.duration || calculateDuration(activity.startTime, activity.endTime);
+                        
+                        const activityElement = document.createElement('div');
+                        activityElement.className = 'activity-item';
+                        activityElement.innerHTML = `
+                            <div>
+                                <strong>${activity.activity}</strong>
+                                <br>
+                                <small>${activity.startTime} - ${activity.endTime} (${activity.activityType})</small>
+                                <br>
+                                <small>Duration: ${duration.toFixed(1)} hours</small>
+                            </div>
+                            <div>
+                                <button class="btn-icon" onclick="editActivity('${doc.id}', '${activity.activity}', '${activity.startTime}', '${activity.endTime}')">✏️</button>
+                                <button class="btn-icon" onclick="deleteActivity('${doc.id}')">🗑️</button>
+                            </div>
+                        `;
+                        activityList.appendChild(activityElement);
+                    });
+                } catch (error) {
+                    console.error("Error loading activities: ", error);
+                }
+            }
+
+            // Update statistics and charts regardless of activity list
+            await updateStatisticsForDate(viewDate);
+            await updateCharts(viewDate);
+
+            // Update the day's rating
+            const activities = await getDayActivities(viewDate);
+            const rating = calculateDayRating(activities);
+            if (document.getElementById('todayRating')) {
+                document.getElementById('todayRating').textContent = rating;
+            }
         }
 
+        // Delete activity
+        window.deleteActivity = async function(docId) {
+            if (confirm('Are you sure you want to delete this activity?')) {
+                try {
+                    await deleteDoc(doc(db, "activities", docId));
+                    await loadActivities();
+                    updateAllStats();
+                } catch (error) {
+                    console.error("Error deleting activity: ", error);
+                    alert('Error deleting activity');
+                }
+            }
+        };
+
+        // Edit activity
+        window.editActivity = function(docId, activity) {
+            document.getElementById('editId').value = docId;
+            document.getElementById('editActivity').value = activity.activity;
+            document.getElementById('editStartTime').value = activity.startTime;
+            document.getElementById('editEndTime').value = activity.endTime;
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'flex';
+            // Add small delay to trigger animation
+            setTimeout(() => modal.classList.add('active'), 10);
+        };
+
+        // Close edit modal
+        window.closeEditModal = function() {
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        };
+
+        // Handle edit form submission
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const docId = document.getElementById('editId').value;
+            const startTime = document.getElementById('editStartTime').value;
+            const endTime = document.getElementById('editEndTime').value;
+
+            if (startTime >= endTime) {
+                alert('End time must be after start time.');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "activities", docId), {
+                    activity: document.getElementById('editActivity').value,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: calculateDuration(startTime, endTime)
+                });
+
+                closeEditModal();
+                await loadActivities();
+                updateAllStats();
+            } catch (error) {
+                console.error("Error updating activity: ", error);
+                alert('Error updating activity');
+            }
+        });
+
+        // Update view date listener
+        document.getElementById('viewDate').addEventListener('change', async () => {
+            await loadActivities();
+        });
+
+        // Make functions globally available
+        window.loadActivities = loadActivities;
+        window.updateCharts = updateCharts;
+
+        // Calculate averages for a date range
+        async function calculateAverages(startDate, endDate) {
+            const activities = await getActivitiesInRange(startDate, endDate);
+            const dayCount = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 1;
+
+            const totals = {
+                productive: 0,
+                relax: 0,
+                waste: 0,
+                daily: 0,
+                sleep: 0,
+                other: 0
+            };
+
+            activities.forEach(activity => {
+                totals[activity.activityType] += activity.duration;
+            });
+
+            return Object.keys(totals).reduce((acc, key) => {
+                acc[key] = (totals[key] / dayCount).toFixed(1);
+                return acc;
+            }, {});
+        }
+
+        // Update statistics based on selected date
+        async function updateStatisticsForDate(date) {
+            const selectedDate = new Date(date);
+            
+            // Calculate week start and end
+            const weekStart = new Date(selectedDate);
+            weekStart.setDate(selectedDate.getDate() - selectedDate.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+
+            // Calculate month start and end
+            const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+
+            // Get averages
+            const weeklyAverages = await calculateAverages(weekStart, weekEnd);
+            const monthlyAverages = await calculateAverages(monthStart, monthEnd);
+
+            // Update weekly averages display
+            Object.keys(weeklyAverages).forEach(type => {
+                const element = document.getElementById(`weekly${type.charAt(0).toUpperCase() + type.slice(1)}Avg`);
+                if (element) {
+                    element.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${weeklyAverages[type]} hrs/day`;
+                }
+            });
+
+            // Update monthly averages display
+            Object.keys(monthlyAverages).forEach(type => {
+                const element = document.getElementById(`monthly${type.charAt(0).toUpperCase() + type.slice(1)}Avg`);
+                if (element) {
+                    element.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${monthlyAverages[type]} hrs/day`;
+                }
+            });
+        }
+
+        // Add export functionality
+        window.exportToPDF = async function() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const exportDate = document.getElementById('viewDate').value;
+                const doc = new jsPDF();
+
+                // Colors
+                const colors = {
+                    primary: '#6366f1',
+                    text: '#1e293b',
+                    productive: '#22c55e',
+                    relax: '#6366f1',
+                    waste: '#ef4444',
+                    daily: '#eab308',
+                    sleep: '#64748b',
+                    other: '#9ca3af'
+                };
+
+                // First page - Text content
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(24);
+                doc.setTextColor(colors.primary);
+
+                // Add decorative header
+                doc.setFillColor(colors.primary);
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor('#ffffff');
+                doc.text("Activity Report", 105, 25, { align: "center" });
+                
+                // Date
+                doc.setFontSize(14);
+                doc.text(`Report for: ${new Date(exportDate).toLocaleDateString()}`, 105, 35, { align: "center" });
+
+                doc.setTextColor(colors.text);
+
+                // Add daily statistics
+                doc.setFontSize(16);
+                doc.setTextColor(colors.primary);
+                doc.text("Daily Activity Breakdown", 20, 60);
+
+            const durationByType = {
+                productive: 0,
+                relax: 0,
+                waste: 0,
+                daily: 0,
+                sleep: 0,
+                other: 0
+            };
+
+                const activities = await getDayActivities(exportDate);
+            activities.forEach(activity => {
+                durationByType[activity.activityType] += activity.duration || calculateDuration(activity.startTime, activity.endTime);
+            });
+
+                let y = 70;
+                doc.setTextColor(colors.text);
+                doc.setFontSize(12);
+                Object.entries(durationByType).forEach(([type, duration]) => {
+                    // Add colored dot before each entry
+                    doc.setFillColor(colors[type]);
+                    doc.circle(25, y - 1, 2, 'F');
+                    doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)}: ${duration.toFixed(1)} hours`, 30, y);
+                    y += 10;
+                });
+
+                // Add longest session
+                y += 10;
+                doc.setFontSize(16);
+                doc.setTextColor(colors.primary);
+                doc.text("Session Records", 20, y);
+                y += 10;
+                doc.setTextColor(colors.text);
+                doc.setFontSize(12);
+                doc.text(`Longest Session: ${(longestSessionDuration / 60).toFixed(1)} hours`, 30, y);
+
+                // Add weekly averages
+                y += 20;
+                doc.setFontSize(16);
+                doc.setTextColor(colors.primary);
+                doc.text("Weekly Averages", 20, y);
+                y += 10;
+
+                const weeklyAverages = await calculateAverages(getWeekStart(exportDate), getWeekEnd(exportDate));
+                doc.setTextColor(colors.text);
+                doc.setFontSize(12);
+                Object.entries(weeklyAverages).forEach(([type, avg]) => {
+                    doc.circle(25, y - 1, 2, 'F');
+                    doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)}: ${avg} hrs/day`, 30, y);
+                    y += 10;
+                });
+
+                // Start monthly averages on new page
+                doc.addPage();
+                doc.setFillColor(colors.primary);
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor('#ffffff');
+                doc.setFontSize(20);
+                doc.text("Monthly Statistics", 105, 25, { align: "center" });
+
+                y = 60;
+                doc.setTextColor(colors.primary);
+                doc.setFontSize(16);
+                doc.text("Monthly Averages", 20, y);
+                y += 10;
+
+                const monthlyAverages = await calculateAverages(getMonthStart(exportDate), getMonthEnd(exportDate));
+                doc.setTextColor(colors.text);
+                doc.setFontSize(12);
+                Object.entries(monthlyAverages).forEach(([type, avg]) => {
+                    doc.setFillColor(colors[type]);
+                    doc.circle(25, y - 1, 2, 'F');
+                    doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)}: ${avg} hrs/day`, 30, y);
+                    y += 10;
+                });
+
+                // Add chart on the same page
+                y += 20;
+                doc.setTextColor(colors.primary);
+                doc.setFontSize(16);
+                doc.text("Activity Distribution", 105, y, { align: "center" });
+
+                const canvas = document.getElementById('activityPieChart');
+                const chartImage = canvas.toDataURL('image/png');
+                doc.addImage(chartImage, 'PNG', 20, y + 10, 170, 85);
+
+                // Save the PDF
+                doc.save(`activity-report-${exportDate}.pdf`);
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                alert("Error generating PDF report. Please try again.");
+            }
+        };
+
+        // Utility functions for date handling
         function getWeekStart(date) {
             const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(d.setDate(diff));
+            d.setDate(d.getDate() - d.getDay());
+            return d;
         }
 
-        function generateReport() {
-            if (!currentUser) {
-                alert("Please sign in to generate a report.");
-                return;
+        function getWeekEnd(date) {
+            const d = new Date(date);
+            d.setDate(d.getDate() - d.getDay() + 6);
+            return d;
+        }
+
+        function getMonthStart(date) {
+            return new Date(new Date(date).getFullYear(), new Date(date).getMonth(), 1);
+        }
+
+        function getMonthEnd(date) {
+            return new Date(new Date(date).getFullYear(), new Date(date).getMonth() + 1, 0);
+        }
+
+                // Get monthly activity data
+                async function getMonthlyActivityData(date) {
+            const monthStart = getMonthStart(date);
+            const monthEnd = getMonthEnd(date);
+            const activities = await getActivitiesInRange(monthStart, monthEnd);
+
+            const monthData = {};
+            
+            activities.forEach(activity => {
+                if (!monthData[activity.date]) {
+                    monthData[activity.date] = {
+                        productive: 0,
+                        relax: 0,
+                        waste: 0,
+                        daily: 0,
+                        sleep: 0,
+                        other: 0
+                    };
+                }
+                monthData[activity.date][activity.activityType] += activity.duration;
+            });
+
+            return monthData;
+        }
+
+        // Stopwatch functionality
+        let startTime = null;
+        let stopwatchInterval = null;
+        let isRunning = false;
+        let lastEndTime = null;
+        let longestSessionDuration = 0; // in minutes
+
+        const stopwatchButton = document.getElementById('stopwatchButton');
+        const stopwatchDisplay = document.getElementById('stopwatchTime');
+        const sessionLogs = document.getElementById('sessionLogs');
+
+        function updateStopwatchDisplay(minutes) {
+            const hrs = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const display = document.getElementById('stopwatchTime');
+            if (display) {
+                display.textContent = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
             }
+        }
 
-            const reportWeekStart = getWeekStart(new Date(document.getElementById('reportWeekPicker').value));
-            const reportWeekEnd = new Date(reportWeekStart);
-            reportWeekEnd.setDate(reportWeekEnd.getDate() + 6);
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            let yOffset = 20;
-
-            // Helper function to add a new page and reset yOffset
-            function addNewPage() {
-                doc.addPage();
-                yOffset = 20;
-            }
-
-            // Helper function to add content
-            function addContent(content, fontSize = 12) {
-                doc.setFontSize(fontSize);
-                const splitText = doc.splitTextToSize(content, 180);
-                doc.text(splitText, 15, yOffset);
-                yOffset += (splitText.length * fontSize * 0.5) + 5;
-            }
-
-            // Helper function to add a table
-            function addTable(headers, rows) {
-                doc.autoTable({
-                    head: [headers],
-                    body: rows,
-                    startY: yOffset,
-                    margin: { left: 15 },
-                    didDrawPage: function(data) {
-                        yOffset = data.cursor.y + 10;
-                    }
+        async function addSessionLog(start, end, isBreak = false) {
+            const duration = Math.round((end - start) / (1000 * 60)); // Duration in minutes
+            
+            // Save to Firebase first
+            try {
+                await addDoc(collection(db, "sessions"), {
+                    startTime: start.toISOString(),
+                    endTime: end.toISOString(),
+                    duration,
+                    isBreak,
+                    date: new Date().toISOString().split('T')[0],
+                    timestamp: new Date().toISOString()
                 });
-            }
 
-            // Title and date range
-            addContent('Weekly Productivity Report', 18);
-            addContent(`Week: ${reportWeekStart.toDateString()} to ${reportWeekEnd.toDateString()}`, 14);
-
-            // Weekly summary table
-            const weeklyHeaders = ['Date', 'Efficiency', 'Total Hours', 'Total Questions', 'Tests Taken'];
-            const weeklyRows = [];
-            let weeklyEfficiency = 0;
-            let weeklyTotalHours = 0;
-            let weeklyTotalQuestions = 0;
-            let weeklyTestsTaken = 0;
-
-            for (let d = new Date(reportWeekStart); d <= reportWeekEnd; d.setDate(d.getDate() + 1)) {
-                const dateString = d.toISOString().split('T')[0];
-                const dayStats = dailyStats[dateString] || {};
-                const efficiency = dayStats.efficiency || 0;
-                const totalHours = Object.values(dayStats.subjects || {}).reduce((sum, s) => sum + (s.hours || 0), 0);
-                const totalQuestions = Object.values(dayStats.subjects || {}).reduce((sum, s) => sum + (s.questions || 0), 0);
-                const testsTaken = dayStats.tests?.length || 0;
-
-                weeklyEfficiency += efficiency;
-                weeklyTotalHours += totalHours;
-                weeklyTotalQuestions += totalQuestions;
-                weeklyTestsTaken += testsTaken;
-
-                weeklyRows.push([
-                    dateString,
-                    `${efficiency.toFixed(2)}%`,
-                    totalHours.toFixed(2),
-                    totalQuestions,
-                    testsTaken
-                ]);
-            }
-
-            addContent('Weekly Summary', 16);
-            addTable(weeklyHeaders, weeklyRows);
-
-            // Weekly totals
-            addContent(`Average Efficiency: ${(weeklyEfficiency / 7).toFixed(2)}%`);
-            addContent(`Total Study Hours: ${weeklyTotalHours.toFixed(2)}`);
-            addContent(`Total Questions Solved: ${weeklyTotalQuestions}`);
-            addContent(`Total Tests Taken: ${weeklyTestsTaken}`);
-
-            // Start subject-wise breakdown on a new page
-            addNewPage();
-            addContent('Subject-wise Breakdown', 16);
-
-            const subjectHeaders = ['Subject', 'Hours', 'Questions'];
-            const subjectRows = subjects.map(subject => {
-                const subjectHours = getWeekTotal(subject, 'hours', reportWeekStart);
-                const subjectQuestions = getWeekTotal(subject, 'questions', reportWeekStart);
-                return [subject, subjectHours.toFixed(2), subjectQuestions];
-            });
-
-            addTable(subjectHeaders, subjectRows);
-
-            // Start test log on a new page
-            addNewPage();
-            addContent('Test Log', 16);
-
-            const testHeaders = ['Date', 'Subject', 'Topic', 'Marks', 'Mistakes'];
-            const testRows = [];
-            const weekTests = getWeekTests(reportWeekStart);
-            weekTests.forEach(test => {
-                const testDate = Object.keys(dailyStats).find(date => dailyStats[date].tests && dailyStats[date].tests.includes(test));
-                testRows.push([
-                    testDate,
-                    test.subject,
-                    test.topic,
-                    `${test.marksScored}/${test.maxMarks}`,
-                    test.mistakes
-                ]);
-            });
-
-            addTable(testHeaders, testRows);
-
-            // Save the PDF
-            doc.save(`weekly_report_${reportWeekStart.toISOString().split('T')[0]}.pdf`);
-        }
-
-        function exportData() {
-            if (!currentUser) {
-                alert("Please sign in to export data.");
-                return;
-            }
-
-            // Get data from Firebase
-            get(child(ref(database), `users/${currentUser.uid}/dailyStats`)).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const data = JSON.stringify(snapshot.val());
-                    const blob = new Blob([data], {type: 'application/json'});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'productivity_data.json';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                } else {
-                    console.log("No data available");
-                    alert("No data available to export.");
-                }
-            }).catch((error) => {
-                console.error(error);
-                alert("Error exporting data. Please try again.");
-            });
-        }
-
-        function importData(event) {
-            if (!currentUser) {
-                alert("Please sign in to import data.");
-                return;
-            }
-
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const importedData = JSON.parse(e.target.result);
-                        // Save imported data to Firebase
-                        set(ref(database, `users/${currentUser.uid}/dailyStats`), importedData)
-                            .then(() => {
-                                dailyStats = importedData;
-                                updateStats();
-                                updateChart();
-                                alert('Data imported successfully!');
-                            })
-                            .catch((error) => {
-                                console.error("Error importing data: ", error);
-                                alert("Error importing data. Please try again.");
-                            });
-                    } catch (error) {
-                        console.error("Error parsing imported data: ", error);
-                        alert('Error importing data. Please make sure the file is valid JSON.');
+                // Update longest session if this is not a break
+                if (!isBreak && duration > longestSessionDuration) {
+                    longestSessionDuration = duration;
+                    if (document.getElementById('longestSession')) {
+                        document.getElementById('longestSession').textContent = (duration / 60).toFixed(1);
                     }
-                };
-                reader.readAsText(file);
+                    await saveStopwatchState();
+                }
+
+                // Refresh the sessions display
+                await loadTodaySessions();
+            } catch (error) {
+                console.error("Error saving session:", error);
             }
         }
 
-        // Initialize
-        function init() {
-            // Check if required libraries are loaded
-            if (typeof flatpickr === 'undefined' || typeof Chart === 'undefined' || 
-                typeof jspdf === 'undefined' || typeof html2canvas === 'undefined' || 
-                typeof DOMPurify === 'undefined') {
-                console.error('One or more required libraries are not loaded. Please check your script tags.');
-                return;
+        async function loadTodaySessions() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const q = query(
+                    collection(db, "sessions"),
+                    where("date", "==", today),
+                    orderBy("timestamp", "desc")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                const sessionLogs = document.getElementById('sessionLogs');
+                
+                if (sessionLogs) {
+                    sessionLogs.innerHTML = ''; // Clear existing sessions
+                    
+                    querySnapshot.forEach((doc) => {
+                        const session = doc.data();
+                        const startTime = new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const endTime = new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        
+                        const sessionItem = document.createElement('div');
+                        sessionItem.className = `session-item ${session.isBreak ? 'break-session' : ''}`;
+                        sessionItem.textContent = `${session.isBreak ? 'Break' : 'Session'}: ${startTime}-${endTime} (${session.duration} minutes)`;
+                        sessionLogs.appendChild(sessionItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading sessions:", error);
             }
-
-            flatpickr("#datePicker", {
-                dateFormat: "Y-m-d",
-                defaultDate: selectedDate,
-                onChange: function(selectedDates, dateStr) {
-                    selectedDate = dateStr;
-                    updateStats();
-                    updateChart();
-                }
-            });
-
-            flatpickr("#weekPicker", {
-                dateFormat: "Y-m-d",
-                defaultDate: selectedDate,
-                weekNumbers: true,
-                onChange: function(selectedDates, dateStr) {
-                    selectedWeekStart = getWeekStart(new Date(dateStr)).toISOString().split('T')[0];
-                    updateWeeklySummary();
-                }
-            });
-
-            flatpickr("#reportWeekPicker", {
-                dateFormat: "Y-m-d",
-                defaultDate: selectedDate,
-                weekNumbers: true,
-            });
-
-            addSubject();
-            updateStats();
-            updateChart();
         }
 
-        // Call init function when the page loads
-        window.onload = init;
+        stopwatchButton.addEventListener('click', async () => {
+            try {
+                if (!isRunning) {
+                    // Starting new session
+                    startTime = new Date();
+                    
+                    // If there was a previous session, log the break
+                    if (lastEndTime) {
+                        await addSessionLog(lastEndTime, startTime, true);
+                    }
+                    
+                    isRunning = true;
+                    stopwatchButton.textContent = 'End Session';
+                    stopwatchButton.classList.add('danger');
+                    
+                    stopwatchInterval = setInterval(() => {
+                        const now = new Date();
+                        const diffMinutes = Math.floor((now - startTime) / (1000 * 60));
+                        updateStopwatchDisplay(diffMinutes);
+                    }, 1000);
 
-        // Make functions global so they can be called from HTML
-        window.addTask = addTask;
-        window.addSubject = addSubject;
-        window.addTest = addTest;
-        window.calculateEfficiency = calculateEfficiency;
-        window.saveDailyStats = saveDailyStats;
-        window.saveTests = saveTests;
-        window.generateReport = generateReport;
-        window.exportData = exportData;
-        window.importData = importData;
-        window.signUp = signUp;
-        window.signIn = signIn;
-        window.signOut = signOutUser;
+                    // Save state after starting
+                    await saveStopwatchState();
+                } else {
+                    // Ending session
+                    clearInterval(stopwatchInterval);
+                    const endTime = new Date();
+                    lastEndTime = endTime;
+                    
+                    await addSessionLog(startTime, endTime);
+                    
+                    isRunning = false;
+                    stopwatchButton.textContent = 'Start Session';
+                    stopwatchButton.classList.remove('danger');
+                    updateStopwatchDisplay(0);
+
+                    // Save state after ending
+                    await saveStopwatchState();
+                }
+            } catch (error) {
+                console.error("Error in stopwatch operation:", error);
+                // Reset to a safe state
+                isRunning = false;
+                clearInterval(stopwatchInterval);
+                stopwatchButton.textContent = 'Start Session';
+                stopwatchButton.classList.remove('danger');
+                updateStopwatchDisplay(0);
+            }
+        });
+
+        // Load longest session from localStorage on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLongestSession = localStorage.getItem('longestSession');
+            if (savedLongestSession) {
+                longestSessionDuration = parseInt(savedLongestSession);
+                document.getElementById('longestSession').textContent = (longestSessionDuration / 60).toFixed(1);
+            }
+        });
+
+        // Add these to your Firebase collections
+        async function saveStopwatchState() {
+            const state = {
+                startTime: startTime ? startTime.getTime() : null,
+                isRunning,
+                lastEndTime: lastEndTime ? lastEndTime.getTime() : null,
+                longestSessionDuration,
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                // Save to 'stopwatchState' collection, always using the same document ID
+                const stateRef = doc(db, "stopwatchState", "current");
+                await setDoc(stateRef, state);
+            } catch (error) {
+                console.error("Error saving stopwatch state:", error);
+            }
+        }
+
+        async function loadStopwatchState() {
+            try {
+                const stateRef = doc(db, "stopwatchState", "current");
+                const stateDoc = await getDoc(stateRef);
+                
+                if (stateDoc.exists()) {
+                    const state = stateDoc.data();
+                    if (state.startTime) startTime = new Date(state.startTime);
+                    if (state.lastEndTime) lastEndTime = new Date(state.lastEndTime);
+                    isRunning = state.isRunning;
+                    longestSessionDuration = state.longestSessionDuration;
+
+                    // Resume stopwatch if it was running
+                    if (isRunning) {
+                        stopwatchButton.textContent = 'End Session';
+                        stopwatchButton.classList.add('danger');
+                        stopwatchInterval = setInterval(() => {
+                            const now = new Date();
+                            const diffMinutes = Math.floor((now - startTime) / (1000 * 60));
+                            updateStopwatchDisplay(diffMinutes);
+                        }, 1000);
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading stopwatch state:", error);
+            }
+        }
+
+        // Update initialization
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadStopwatchState();
+            await loadTodaySessions();
+            // ... rest of your initialization code ...
+        });
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', async () => {
+            await saveStopwatchState();
+        });
+
+        // Add this function for editing longest session
+        window.editLongestSession = async function() {
+            const newDuration = prompt("Enter new longest session duration (in minutes):", longestSessionDuration);
+            if (newDuration !== null) {
+                const duration = parseInt(newDuration);
+                if (!isNaN(duration) && duration >= 0) {
+                    longestSessionDuration = duration;
+                    document.getElementById('longestSession').textContent = (duration / 60).toFixed(1);
+                    await saveStopwatchState();
+                } else {
+                    alert("Please enter a valid number of minutes.");
+                }
+            }
+        };
+
     </script>
 </body>
 </html>
